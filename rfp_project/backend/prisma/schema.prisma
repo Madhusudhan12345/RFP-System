@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Vendor {
+  id            String   @id @default(uuid())
+  name          String
+  contactEmail  String
+  contactPerson String?
+  phone         String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  proposals     Proposal[]
+  rfpVendors    RfpVendor[]
+}
+
+model Rfp {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  structured  Json?
+  budget      Float?
+  deliveryDays Int?
+  paymentTerms String?
+  warrantyMonths Int?
+  status      String      @default("draft")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  proposals   Proposal[]
+  rfpVendors  RfpVendor[]
+}
+
+model RfpVendor {
+  id        String  @id @default(uuid())
+  rfp       Rfp     @relation(fields:[rfpId], references:[id])
+  rfpId     String
+  vendor    Vendor  @relation(fields:[vendorId], references:[id])
+  vendorId  String
+  sentAt    DateTime?
+  messageId String?
+}
+
+model Proposal {
+  id               String   @id @default(uuid())
+  rfp              Rfp      @relation(fields:[rfpId], references:[id])
+  rfpId            String
+  vendor           Vendor   @relation(fields:[vendorId], references:[id])
+  vendorId         String
+  rawEmail         String?
+  parsed           Json?
+  completeness     Int?
+  aiScore          Float?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  items            ProposalItem[]
+}
+
+model ProposalItem {
+  id          String  @id @default(uuid())
+  proposal    Proposal @relation(fields:[proposalId], references:[id])
+  proposalId  String
+  description String
+  unitPrice   Float?
+  qty         Int?
+  totalPrice  Float?
+}
+
+model EmailLog {
+  id        String   @id @default(uuid())
+  rfpId     String?
+  vendorId  String?
+  direction String
+  subject   String?
+  body      String?
+  raw       Json?
+  createdAt DateTime @default(now())
+}
